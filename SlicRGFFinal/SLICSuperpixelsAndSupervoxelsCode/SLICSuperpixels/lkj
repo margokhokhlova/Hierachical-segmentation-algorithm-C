@@ -1,0 +1,123 @@
+#ifndef MAT_CONNECTED_H
+#define MAT_CONNECTED_H
+
+
+#include <stdio.h>
+#include <math.h>
+
+
+#include <opencv2/core/core.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv/highgui.h>
+
+using namespace std;
+using namespace cv;
+
+
+/*
+This class builds the correspondance matrix for the the regions connections
+*/
+
+class mat_connected {
+
+private:
+	vector<vector<int>> matrix;
+public:
+	void mat_connected::initMat(int numReg) {
+	vector<int> temp;
+	int i=0;
+	while (i<numReg)
+	{
+		temp.push_back(0);
+		i++;
+	}
+	int j=0;
+	while (j<numReg)
+	{
+		matrix.push_back(temp);
+		j++;
+	}
+
+	cout<<matrix.size()<<"x"<<matrix[0].size()<<" matrix is created and initialized with zeros"<<endl;
+	}
+	
+	vector<vector<int>> mat_connected::CheckConnectivity(vector<vector<int>> labels, int rows, int cols) {
+	int RegionLab; //so the fist one is just any value
+	int neighbour;
+	Point coor;
+		
+	for (int j = 1; j < rows-1; j++)  {    
+       for (int i = 1; i < cols-1; i++)  {  
+		   //loop avoids all the border pixels
+			
+		   	// Here all the 4 direct neighbours are to be checked
+	//               neighb1
+	//       neighb2  pixel neighb3
+	//               neighb4
+
+			coor.x=i; coor.y=j;
+			RegionLab=labels[i][j]; //label
+			neighbour=labels[i-1][j];
+			if (neighbour!=RegionLab) 
+			matrix[RegionLab][neighbour]=1; //assigne the value 1 for the connected regions;
+			neighbour=labels[i+1][j];
+			if (neighbour!=RegionLab) 
+			matrix[RegionLab][neighbour]=1;
+			neighbour=labels[i][j-1];
+			if (neighbour!=RegionLab) 
+			matrix[RegionLab][neighbour]=1;
+			neighbour=labels[i][j+1];
+			if (neighbour!=RegionLab) 
+			matrix[RegionLab][neighbour]=1;
+
+	   }
+	
+	}
+
+return matrix;	
+}
+
+vector<vector<int>> mat_connected::DeleteRaw(vector<vector<int>> matrix, vector<int> neighb, int index1, int index2){
+	
+	//cout<<index1<<" main ind, "<<index2<<" second to be merged"<<endl;
+//cout<<neighb.size()<<"size of neigb"<<endl;
+	for (int j=0; j<neighb.size(); j++) {
+		//cout<<neighb[j]<<endl;
+		if (neighb[j]!=index1) {
+	matrix[neighb[j]][index1]=5; //change the neighb values
+	matrix[index1][neighb[j]]=7;
+		}
+    //matrix[neighb[j]][index2]=-1;
+	//matrix[index2][neighb[j]]=-2;
+	}
+	
+
+//cout<<"with the value adjasted"<<endl;
+//
+//
+//		for (int j = 0; j < matrix.size(); j++)  {
+//		cout<<endl;
+//       for (int i = 0; i < matrix[0].size(); i++)  {  
+//		   cout<<matrix[j][i]<<" ";
+//	   }
+//	}
+//
+//cout<<endl;
+
+
+	for (int i=0; i<matrix.size(); i++){
+   	matrix[i].erase (matrix[i].begin()+index2); //deleting the column
+	}
+	matrix.erase(matrix.begin()+index2);//deleteing the row
+return matrix;	
+}
+
+
+
+
+
+};
+
+
+
+#endif

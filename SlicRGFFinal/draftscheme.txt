@@ -1,0 +1,260 @@
+
+
+	std::map<string, vector<Point>> Final_segmentation; //to save the final map of labeled regions
+std::map<std::string, vector<Point>> coarse_level=REG_hierach[i+1]; //current layer
+std::map<std::string, vector<Point>> detail_level=REG_hierach[i]; //previous layer
+vector<string> hash_keys = Getkeysh(detail_level);
+vector<string> keys_coarse = Getkeysh(coarse_level);
+cout<<"Build hierarchy between the regions "<<i<<" of the size "<<detail_level.size()<<" and "<<i+1<<" of the size "<<coarse_level.size()<<endl;
+
+//if (i<7) {
+//Aligment
+
+
+for (int n=0; n< detail_level.size(); n++) 
+	{//for each region
+	Node tree_node; //create a node to store all values	
+	for (int k=0; k<detail_level[hash_keys[n]].size(); k++) 
+		{
+		Vec3b  color = SEG_level[i].at<Vec3b>(Point(detail_level[hash_keys[n]].at(k))); //get the color label from the coarse color map for each pixel
+		string CODEDstring=convertString(color); //convert color to string	
+		//// Here I just want to store all unique labels and correponding weight into node ////
+			if (tree_node.Key_Regions.empty())
+			{
+				tree_node.Key_Regions.push_back(CODEDstring);
+				tree_node.Weight.push_back(0);
+			
+			}
+			int gr=0;
+			// other option is 
+			while (((gr<tree_node.Key_Regions.size())  && (tree_node.Key_Regions[gr]).compare(CODEDstring)!=0))
+			{ //while the strings are not same and and we didn't check all the regions already in the list
+				gr++;
+			}
+			if (gr<tree_node.Key_Regions.size())
+			{ // the entry already exists 
+				tree_node.Weight[gr]=tree_node.Weight[gr]+1; //update the corresponding weight
+				
+			}
+			else
+			{ 
+				tree_node.Key_Regions.push_back(CODEDstring); // else save the corresponding hash_key
+				tree_node.Weight.push_back(1); //give initial weight 1
+			   
+			}
+
+		}	
+//at this point I have already one node computed, ehich consist of parent region and corresponding weights. 
+	
+	if (tree_node.Weight.size()>1)
+{
+	int index=getIndexOfLargestElement(tree_node.Weight, tree_node.Weight.size()); //index of the main region
+	//double contourpoints=tree_node.ContourPoints[index]/tree_node.Weight[index];
+		if (keyExist(tree_node.Key_Regions[index],Final_segmentation)==1) 
+				{	Final_segmentation=addPoints(Final_segmentation, tree_node.Key_Regions[index], detail_level[hash_keys[n]]);
+				 }
+			else 
+				{ //else just create a new entry and put there all the points
+					Final_segmentation.insert(Final_segmentation.end(),Hash_Pair(tree_node.Key_Regions[index], detail_level[hash_keys[n]]));
+				
+				}
+
+	}
+	else 
+	{ //else the region belong to one region only
+			if (keyExist(tree_node.Key_Regions[0],Final_segmentation)==1) 
+				{
+					Final_segmentation=addPoints(Final_segmentation, tree_node.Key_Regions[0], detail_level[hash_keys[n]]);
+					 
+				}
+			else 
+				{ //else just create a new entry and put there all the points
+                       Final_segmentation.insert(Final_segmentation.end(),Hash_Pair(tree_node.Key_Regions[0], detail_level[hash_keys[n]]));
+				}
+	}
+
+
+
+
+}
+//}
+//else {
+//	//this loop is for the upper segmentation levels, when I want to use the obtained contour infromation
+//
+//for (int n=0; n< detail_level.size(); n++) 
+//	{//for each region
+//	Node tree_node; //create a node to store all values	
+//	for (int k=0; k<detail_level[hash_keys[n]].size(); k++) 
+//		{
+//		Vec3b  color = SEG_level[i].at<Vec3b>(Point(detail_level[hash_keys[n]].at(k))); //get the color label from the coarse color map for each pixel
+//		int intensityval=edge.at<uchar>(Point(detail_level[hash_keys[n]].at(k))); //this one to get the label from the contour map
+//		//cout<<intensityval<<endl;
+//		string CODEDstring=convertString(color); //convert color to string	
+//		//// Here I just want to store all unique labels and correponding weight into node ////
+//			if (tree_node.Key_Regions.empty())
+//			{
+//				tree_node.Key_Regions.push_back(CODEDstring);
+//				tree_node.Weight.push_back(0);
+//				//if (intensityval>0)
+//					tree_node.ContourPoints.push_back(1);
+//			}
+//			int gr=0;
+//			// other option is 
+//			while (((gr<tree_node.Key_Regions.size())  && (tree_node.Key_Regions[gr]).compare(CODEDstring)!=0))
+//			{ //while the strings are not same and and we didn't check all the regions already in the list
+//				gr++;
+//			}
+//			if (gr<tree_node.Key_Regions.size())
+//			{ // the entry already exists 
+//				tree_node.Weight[gr]=tree_node.Weight[gr]+1; //update the corresponding weight
+//				if (intensityval>0)  tree_node.ContourPoints[gr]=tree_node.ContourPoints[gr]+1; //update the contour point if there is any
+//			}
+//			else
+//			{ 
+//				tree_node.Key_Regions.push_back(CODEDstring); // else save the corresponding hash_key
+//				tree_node.Weight.push_back(1); //give initial weight 1
+//				tree_node.ContourPoints.push_back(1);
+//				
+//			}
+//
+//		}	
+////at this point I have already one node computed, ehich consist of parent region and corresponding weights. 
+//	
+//	if (tree_node.Weight.size()>1)
+//{
+//	int index=getIndexOfLargestElementwithLeastContourPoints(tree_node.Weight, tree_node.Weight.size(), tree_node.ContourPoints); //index of the main region
+//		if (keyExist(tree_node.Key_Regions[index],Final_segmentation)==1) 
+//				{	Final_segmentation=addPoints(Final_segmentation, tree_node.Key_Regions[index], detail_level[hash_keys[n]]);
+//				 }
+//			else 
+//				{ //else just create a new entry and put there all the points
+//					Final_segmentation.insert(Final_segmentation.end(),Hash_Pair(tree_node.Key_Regions[index], detail_level[hash_keys[n]]));
+//				
+//				}
+//
+//	}
+//	else 
+//	{ //else the region belong to one region only
+//			if (keyExist(tree_node.Key_Regions[0],Final_segmentation)==1) 
+//				{
+//					Final_segmentation=addPoints(Final_segmentation, tree_node.Key_Regions[0], detail_level[hash_keys[n]]);
+//					 
+//				}
+//			else 
+//				{ //else just create a new entry and put there all the points
+//                       Final_segmentation.insert(Final_segmentation.end(),Hash_Pair(tree_node.Key_Regions[0], detail_level[hash_keys[n]]));
+//				}
+//	}
+//
+//
+//
+//
+//}
+
+
+
+
+//}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+for (int n=0; n< detail_level.size(); n++) 
+		{//for each region
+		Node tree_node; //create a node to store all values	
+		for (int k=0; k<detail_level[hash_keys[n]].size(); k++) 
+			{
+			Vec3b  color = SEG_level[i].at<Vec3b>(Point(detail_level[hash_keys[n]].at(k))); //get the color label from the coarse color map for each pixel
+			string CODEDstring=convertString(color); //convert color to string	
+		//// Here I just want to store all unique labels and correponding weight into node ////
+				if (tree_node.Key_Regions.empty())
+				{
+					tree_node.Key_Regions.push_back(CODEDstring);
+					tree_node.Weight.push_back(0);
+			
+				}
+			int gr=0;
+			// other option is 
+			while (((gr<tree_node.Key_Regions.size())  && (tree_node.Key_Regions[gr]).compare(CODEDstring)!=0))
+				{ //while the strings are not same and and we didn't check all the regions already in the list
+					gr++;
+				}
+			if (gr<tree_node.Key_Regions.size())
+				{ // the entry already exists 
+					tree_node.Weight[gr]=tree_node.Weight[gr]+1; //update the corresponding weight
+				
+				}
+			else
+				{ 
+					tree_node.Key_Regions.push_back(CODEDstring); // else save the corresponding hash_key
+					tree_node.Weight.push_back(1); //give initial weight 1
+			   	}
+
+		}	
+//at this point I have already one node computed, ehich consist of parent region and corresponding weights. 
+	
+	if (tree_node.Weight.size()>1)
+{
+	int index=getIndexOfLargestElement(tree_node.Weight, tree_node.Weight.size()); //index of the main region
+	//double contourpoints=tree_node.ContourPoints[index]/tree_node.Weight[index];
+		if (keyExist(tree_node.Key_Regions[index],Final_segmentation)==1) 
+				{	Final_segmentation=addPoints(Final_segmentation, tree_node.Key_Regions[index], detail_level[hash_keys[n]]);
+		             coloredim=ColorRegion(coloredim, Final_segmentation, tree_node.Key_Regions[index], detail_level[hash_keys[n]]);  
+				 }
+			else 
+				{ //else just create a new entry and put there all the points
+					Final_segmentation.insert(Final_segmentation.end(),Hash_Pair(tree_node.Key_Regions[index], detail_level[hash_keys[n]]));
+				
+				}
+
+	}
+	else 
+	{ //else the region belong to one region only
+			if (keyExist(tree_node.Key_Regions[0],Final_segmentation)==1) 
+				{
+					Final_segmentation=addPoints(Final_segmentation, tree_node.Key_Regions[0], detail_level[hash_keys[n]]);
+					coloredim=ColorRegion(coloredim, Final_segmentation, tree_node.Key_Regions[0], detail_level[hash_keys[n]]);   
+				}
+			else 
+				{ //else just create a new entry and put there all the points
+                       Final_segmentation.insert(Final_segmentation.end(),Hash_Pair(tree_node.Key_Regions[0], detail_level[hash_keys[n]]));
+				}
+	}
+
+}
